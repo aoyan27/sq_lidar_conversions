@@ -42,6 +42,12 @@ bool init_lcl_flag = true;
 
 float z_threshold = 5.0;
 
+string POINTCLOUD_TOPIC;
+string OUTPUT_TOPIC;
+string ODOM_TOPIC;
+string ODOM_PARENT_FRAME;
+string ODOM_CHILD_FRAME;
+
 Eigen::Matrix4f create_matrix(nav_msgs::Odometry odom_now, float reflect){
 	double roll_now, pitch_now, yaw_now;
 	
@@ -157,16 +163,22 @@ int main(int argc, char** argv)
 	ros::init(argc, argv, "save_lidar_point_lcl");
 	ros::NodeHandle n;
 
-	ros::Subscriber sub_pc = n.subscribe("/sq_lidar/points", 1, pc_callback);
-	ros::Subscriber sub_lcl = n.subscribe("/odom", 1, lcl_callback);
+	n.getParam("/sq_lidar_conversions/pointcloud_topic", POINTCLOUD_TOPIC);
+	n.getParam("/sq_lidar_conversions/output_topic", OUTPUT_TOPIC);
+	n.getParam("/sq_lidar_conversions/odom_topic", ODOM_TOPIC);
+	n.getParam("/sq_lidar_conversions/odom_parent_frame", ODOM_PARENT_FRAME);
+	n.getParam("/sq_lidar_conversions/odom_child_frame", ODOM_CHILD_FRAME);
+
+	ros::Subscriber sub_pc = n.subscribe(POINTCLOUD_TOPIC, 1, pc_callback);
+	ros::Subscriber sub_lcl = n.subscribe(ODOM_TOPIC, 1, lcl_callback);
 	
 	
-	pub_pc = n.advertise<sensor_msgs::PointCloud2>("/sq_lidar/points/lcl", 1);
+	pub_pc = n.advertise<sensor_msgs::PointCloud2>(OUTPUT_TOPIC, 1);
 	
 	nav_msgs::Odometry init_odom;
 
-	init_odom.header.frame_id = "/odom";
-	init_odom.child_frame_id = "/base_link";
+	init_odom.header.frame_id = ODOM_PARENT_FRAME;
+	init_odom.child_frame_id = ODOM_CHILD_FRAME;
 	init_odom.pose.pose.position.x = 0.0;
 	init_odom.pose.pose.position.y = 0.0;
 	init_odom.pose.pose.position.z = 0.0;
@@ -178,11 +190,7 @@ int main(int argc, char** argv)
 	odom_ = init_odom;
 	
 	cout<<"start!!"<<endl;
-	// ros::Rate rate(40);
-      // while (ros::ok()){
-		// rate.sleep();
-		// ros::spinOnce();
-	// }
+
 	ros::spin();
 	
 	return 0;
