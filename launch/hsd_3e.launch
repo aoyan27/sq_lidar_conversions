@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<launch>
+	<node pkg="sq_lidar_conversions" type="laser2points" name="laser2points"/>
+	<node pkg="sq_lidar_conversions" type="save_points_odom" name="save_points_odom"/>
+</launch>
+	
