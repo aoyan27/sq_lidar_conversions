@@ -146,7 +146,7 @@ SET(CMAKE_CXX_FLAGS "-std=c++11 -O2 -g -Wall ${CMAKE_CXX_FLAGS}")
 ## Declare a C++ executable
 # add_executable(aodyne_pointcloud_node src/aodyne_pointcloud_node.cpp)
 add_executable(laser2pointcloud src/laser2pointcloud.cpp)
-add_executable(save_lidar_point_odom src/save_lidar_point_odom.cpp)
+add_executable(save_pointcloud_odom src/save_pointcloud_odom.cpp)
 
 add_executable(test_laser src/test_laser.cpp)
 
@@ -162,7 +162,7 @@ target_link_libraries(laser2pointcloud
   ${catkin_LIBRARIES}
   ${PCL_LIBRARIES}
 )
-target_link_libraries(save_lidar_point_odom
+target_link_libraries(save_pointcloud_odom
   ${catkin_LIBRARIES}
   ${PCL_LIBRARIES}
 )
