@@ -148,7 +148,7 @@ SET(CMAKE_CXX_FLAGS "-std=c++11 -O2 -g -Wall ${CMAKE_CXX_FLAGS}")
 add_executable(laser2pointcloud src/laser2pointcloud.cpp)
 add_executable(save_pointcloud_odom src/save_pointcloud_odom.cpp)
 
-add_executable(test_laser src/test_laser.cpp)
+# add_executable(test_laser src/test_laser.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
@@ -167,9 +167,9 @@ target_link_libraries(save_pointcloud_odom
   ${PCL_LIBRARIES}
 )
 
-target_link_libraries(test_laser
-  ${catkin_LIBRARIES}
-)
+# target_link_libraries(test_laser
+  # ${catkin_LIBRARIES}
+# )
 
 #############
 ## Install ##
