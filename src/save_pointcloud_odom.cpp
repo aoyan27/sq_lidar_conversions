@@ -19,9 +19,6 @@
 #include <omp.h>
 #endif
 
-#define PI 3.141592
-#define UNIT_SIZE 1080
-
 using namespace std;
 
 pcl::PointCloud<pcl::PointXYZ>::Ptr save_pc_ (new pcl::PointCloud<pcl::PointXYZ>);
@@ -48,17 +45,17 @@ string ODOM_TOPIC;
 string ODOM_PARENT_FRAME;
 string ODOM_CHILD_FRAME;
 
-Eigen::Matrix4f create_matrix(nav_msgs::Odometry odom_now, float reflect){
+Eigen::Matrix4f create_matrix(nav_msgs::Odometry odom_now){
 	double roll_now, pitch_now, yaw_now;
 	
 	tf::Quaternion q_now(odom_now.pose.pose.orientation.x, odom_now.pose.pose.orientation.y, odom_now.pose.pose.orientation.z, odom_now.pose.pose.orientation.w);
 	tf::Matrix3x3(q_now).getRPY(roll_now, pitch_now, yaw_now);
 	// cout<<"roll_now : "<<roll_now<<", pitch_now : "<<pitch_now<<", yaw_now : "<<yaw_now<<endl;
 	
-	Eigen::Translation3f init_translation(reflect*odom_now.pose.pose.position.x, reflect*odom_now.pose.pose.position.y, reflect*odom_now.pose.pose.position.z);
-	Eigen::AngleAxisf init_rotation_x(reflect*roll_now, Eigen::Vector3f::UnitX());
-	Eigen::AngleAxisf init_rotation_y(reflect*pitch_now, Eigen::Vector3f::UnitY());
-	Eigen::AngleAxisf init_rotation_z(reflect*yaw_now, Eigen::Vector3f::UnitZ());
+	Eigen::Translation3f init_translation(odom_now.pose.pose.position.x, odom_now.pose.pose.position.y, odom_now.pose.pose.position.z);
+	Eigen::AngleAxisf init_rotation_x(roll_now, Eigen::Vector3f::UnitX());
+	Eigen::AngleAxisf init_rotation_y(pitch_now, Eigen::Vector3f::UnitY());
+	Eigen::AngleAxisf init_rotation_z(yaw_now, Eigen::Vector3f::UnitZ());
 	
 	Eigen::Matrix4f init_guess = (init_translation * init_rotation_z * init_rotation_y * init_rotation_x).matrix();
 
@@ -87,8 +84,7 @@ void lcl_callback(nav_msgs::Odometry msg){
 	// cout<<"odom_.pose.pose.orientation.x : "<<odom_.pose.pose.orientation.z<<endl;
 	// cout<<"odom_.pose.pose.orientation.w : "<<odom_.pose.pose.orientation.w<<endl;
 
-	transform_matrix = create_matrix(odom_, 1.0);
-	// inverse_transform_matrix = create_matrix(odom_, -1.0);
+	transform_matrix = create_matrix(odom_);
 	// cout<<"transform_matrix : "<<endl<<transform_matrix<<endl;
 }
 
@@ -117,14 +113,12 @@ void pc_callback(sensor_msgs::PointCloud2 msg){
 		
 	if(count_ < save_num){
 		*save_pc_ += *output_pc_after;
-		// *save_pc_ += *output_pc;
 		old_pc_ = output_pc_after;
 	}
 	else{
 		int old_pc_size = (int)old_pc_->points.size();
 		save_pc_->points.erase(save_pc_->points.begin(), save_pc_->points.begin()+old_pc_size);	
 		*save_pc_ += *output_pc_after;
-		// *save_pc_ += *output_pc;
 		old_pc_ = output_pc_after;
 	}
 	cout<<"save_pc_ : "<<save_pc_->points.size()<<endl;
@@ -134,25 +128,9 @@ void pc_callback(sensor_msgs::PointCloud2 msg){
 	Eigen::Matrix4f inverse_transform_matrix = transform_matrix.inverse();
 	pcl::transformPointCloud(*save_pc_, *output_save_pc, inverse_transform_matrix);
 
-	// pcl::transformPointCloud(*save_pc_, *output_save_pc, transform_matrix);
-
-	// pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_pc (new pcl::PointCloud<pcl::PointXYZ>);
-	// pcl::ApproximateVoxelGrid<pcl::PointXYZ> approximate_voxel_filter;
-	// approximate_voxel_filter.setLeafSize(0.3, 0.3, 0.3);
-	// approximate_voxel_filter.setInputCloud(output_save_pc);
-	// // approximate_voxel_filter.setInputCloud(save_pc_);
-	// approximate_voxel_filter.filter(*filtered_pc);
-
-
 	sensor_msgs::PointCloud2 pc_;
-	// pcl::PCLPointCloud2 pcl_pointcloud2;
-	// pcl::toPCLPointCloud2(*save_pc_, pcl_pointcloud2);
-	// toROSMsg(*filtered_pc, pc_);
 	toROSMsg(*output_save_pc, pc_);
 	pc_.header = msg.header;
-	// pc_.header.stamp = ros::Time::now();
-	// pc_.header.frame_id = "/map";
-	// toROSMsg(*single_pc_, pc_);
 
 	pub_pc.publish(pc_);
 	count_++;
