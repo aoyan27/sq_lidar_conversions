@@ -21,8 +21,11 @@
 
 using namespace std;
 
-pcl::PointCloud<pcl::PointXYZ>::Ptr save_pc_ (new pcl::PointCloud<pcl::PointXYZ>);
-pcl::PointCloud<pcl::PointXYZ>::Ptr old_pc_ (new pcl::PointCloud<pcl::PointXYZ>);
+typedef pcl::PointXYZI PointType;
+typedef pcl::PointCloud<PointType> CloudType;
+
+CloudType::Ptr save_pc_ (new CloudType);
+CloudType::Ptr old_pc_ (new CloudType);
 
 nav_msgs::Odometry odom_;
 nav_msgs::Odometry init_odom_;
@@ -33,7 +36,7 @@ Eigen::Matrix4f transform_matrix;
 Eigen::Matrix4f inverse_transform_matrix;
 
 int count_ = 0;
-int save_num = 200;
+int save_num = 120;
 
 bool init_lcl_flag = true;
 
@@ -91,23 +94,22 @@ void lcl_callback(nav_msgs::Odometry msg){
 void pc_callback(sensor_msgs::PointCloud2 msg){
 	cout<<"-----------------------"<<endl;
 
-	pcl::PointCloud<pcl::PointXYZ>::Ptr single_pc_ (new pcl::PointCloud<pcl::PointXYZ>);
+	CloudType::Ptr single_pc_ (new CloudType);
 	pcl::fromROSMsg(msg, *single_pc_);
 	cout<<"single_pc_ : "<<single_pc_->points.size()<<endl;
 
-	pcl::PointCloud<pcl::PointXYZ>::Ptr output_pc (new pcl::PointCloud<pcl::PointXYZ>);
+	CloudType::Ptr output_pc (new CloudType);
 	// pcl::transformPointCloud(*single_pc_, *output_pc, inverse_transform_matrix);
 	pcl::transformPointCloud(*single_pc_, *output_pc, transform_matrix);
 
-	pcl::PointCloud<pcl::PointXYZ>::Ptr output_pc_after (new pcl::PointCloud<pcl::PointXYZ>);
+	CloudType::Ptr output_pc_after (new CloudType);
 	size_t single_pc_size = single_pc_->points.size();
 	for(size_t i=0; i<single_pc_size;i++){
 		if(single_pc_->points[i].z <= z_threshold){
-			pcl::PointXYZ temp;
-			temp.x = output_pc->points[i].x;
-			temp.y = output_pc->points[i].y;
-			temp.z = output_pc->points[i].z;
-			output_pc_after->points.push_back(temp);
+			PointType tmp;
+			tmp = output_pc->points[i];
+			
+			output_pc_after->points.push_back(tmp);
 		}
 	}
 		
@@ -124,7 +126,7 @@ void pc_callback(sensor_msgs::PointCloud2 msg){
 	cout<<"save_pc_ : "<<save_pc_->points.size()<<endl;
 	// cout<<"save_pc_ : "<<save_pc_->width<<endl;
 	// cout<<"save_pc_ : "<<save_pc_->height<<endl;
-	pcl::PointCloud<pcl::PointXYZ>::Ptr output_save_pc (new pcl::PointCloud<pcl::PointXYZ>);
+	CloudType::Ptr output_save_pc (new CloudType);
 	Eigen::Matrix4f inverse_transform_matrix = transform_matrix.inverse();
 	pcl::transformPointCloud(*save_pc_, *output_save_pc, inverse_transform_matrix);
 
